@@ -15,15 +15,9 @@ INTEGER            : [1-9] [0-9]*
                    | '0'+
                    ;
 
-Float              : EXPONENT_OR_POINT_FLOAT;
+FLOAT              : EXPONENT_OR_POINT_FLOAT;
 
-OPEN_PAREN         : '(' ;
-CLOSE_PAREN        : ')' ;
-OPEN_BRACE         : '{' ;
-CLOSE_BRACE        : '}' ; 
-OPEN_BRACKET       : '[' ;
-CLOSE_BRACKET      : ']' ;
-DOT                : '.' ;
+MARKER             : '(' | ')' | '{' | '}' ; 
 
 NAME               : ID_START ID_CONTINUE*;
 NAME_REF           : '`' NAME ;

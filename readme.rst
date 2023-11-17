@@ -51,14 +51,15 @@ Commands
  * ``unpack``: puts the elements of a list or function on the stack
  
 With a path, dictionaries are created implicitly.
-The command::
+The command:
+
     5.0 origin.x def 
 
 creates a dictionary ``origin`` and puts a key/value pair ``'x': 5.0`` in it.
 
 
-What is not
-============
+What is not included
+====================
 
 Sven put a 2D an 3D vector type in his machine.
 This is not necessary. 
