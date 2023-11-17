@@ -131,9 +131,31 @@ def end_list_func(stack):
 
 list_extension = { '(': start_list_func, ')': end_list_func }
 
+def dup_func(stack):
+    stack.append(stack[-1])
+
+def ndup_func(stack):
+    n = int(stack.pop())
+    object = stack[-1]
+    for i in range(n):
+        stack.append(object)
+
+def swap_func(stack):
+    a = stack.pop()
+    b = stack.pop()
+    stack.append(a)
+    stack.append(b)
+
+stack_extension = {
+    'dup': dup_func,
+    'ndup': ndup_func,
+    'swap': swap_func
+}
+
 def main(argv):
     interpreter = Interpreter()
     interpreter.register(list_extension)
+    interpreter.register(stack_extension)
     interpreter.interpret_file(argv[1])
 
 if __name__ == '__main__':
