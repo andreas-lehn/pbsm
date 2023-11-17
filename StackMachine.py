@@ -1,6 +1,6 @@
 # StackMachine in Python
 
-from antlr4 import FileStream, Token
+from antlr4 import FileStream, Token, InputStream
 from StackMachineLexer import StackMachineLexer
 
 class Marker:
@@ -111,6 +111,9 @@ class Interpreter:
     
     def interpret_file(self, filename):
         input = FileStream(filename)
+        self.interpret_stream(input)
+    
+    def interpret_stream(self, input):
         lexer = StackMachineLexer(input)
         while True:
             token = lexer.nextToken()
@@ -119,7 +122,11 @@ class Interpreter:
             object = Interpreter.token_to_object(token)
             if object:
                 self.execute(object)
-                print(self.stack)
+
+    def interpret_command(self, command):
+        input = InputStream(command)
+        self.interpret_stream(input)
+    
 
 START_LIST = Marker('(')
 
@@ -129,7 +136,31 @@ def start_list_func(stack):
 def end_list_func(stack):
     stack.append(pop_to_marker(stack, START_LIST))
 
-list_extension = { '(': start_list_func, ')': end_list_func }
+def append_func(stack):
+    item = stack.pop()
+    stack[-1].append(item)
+
+def extend_func(stack):
+    item = stack.pop()
+    stack[-1].extend(item)
+
+def get_func(stack):
+    index = int(stack.pop())
+    stack.append(stack[-1][index])
+
+def set_func(stack):
+    index = int(stack.pop())
+    item = stack.pop()
+    stack[-1][index] = item
+
+list_extension = {
+    '(': start_list_func,
+    ')': end_list_func,
+    'append': append_func,
+    'extend': extend_func,
+    'get': get_func,
+    'set': set_func
+}
 
 def dup_func(stack):
     stack.append(stack[-1])
@@ -153,10 +184,27 @@ stack_extension = {
 }
 
 def main(argv):
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename', nargs='?', type=str, help='name of input file')
+    parser.add_argument('-c', '--command', type=str, help='command to executer')
+    args = parser.parse_args()
+
     interpreter = Interpreter()
     interpreter.register(list_extension)
     interpreter.register(stack_extension)
-    interpreter.interpret_file(argv[1])
+    if args.command:
+        interpreter.interpret_command(args.command)
+    elif args.filename:
+        interpreter.interpret_file(args.filename)
+    else:
+        for line in sys.stdin:
+            try:
+                interpreter.interpret_command(line)
+            except (RuntimeError, KeyError, TypeError) as err:
+                print(err)
+            print(interpreter.stack)
 
 if __name__ == '__main__':
     import sys
