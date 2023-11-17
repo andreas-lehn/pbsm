@@ -30,7 +30,6 @@ The built-in data types are:
  * ``float``: Float numbers
  * ``bool``
  * ``string``
- * ``list``: represented by a pyhton list but syntactically written as a lisp list
  * ``symbol``: a symbol is simply an indentifier of a function or variable 
  * ``path``: a sequence of identifiers seperated by a ``.``.
  * ``function``: a object that executes a list.
@@ -40,15 +39,18 @@ We know from C that this works but that it also has a lot of draw backs.
 All modern languages come with a boolean type.
 This is why I also decided to include this type although it may work without it.
 
+The data types 
+* ``list``: represented by a pyhton list but syntactically written as a lisp list
+* ``2D vector``
+* ``3D vector``
+can be implemented as addons and must not be included in the interpreter.
+
+ 
 Commands
 --------
 
  * ``def`` to assign a value to an identifier, with is a symbol or a path
  * ``func`` creates a function object that executes a list
- * ``startlist``: put a list start marker on the stack (symbol ``(``)
- * ``createlist``: constructs an list object wiht the elements up to the list start marker an puts it on the stack.
-     If the list is executable, it creates a function object for the list.
- * ``unpack``: puts the elements of a list or function on the stack
  
 With a path, dictionaries are created implicitly.
 The command:
