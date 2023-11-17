@@ -202,10 +202,10 @@ def main(argv):
         for line in sys.stdin:
             try:
                 interpreter.interpret_command(line)
-            except (RuntimeError, KeyError, TypeError) as err:
-                print(err)
+            except (RuntimeError, KeyError, TypeError, IndexError) as err:
+                print(type(err).__name__, ':', str(err))
             print(interpreter.stack)
-
+        
 if __name__ == '__main__':
     import sys
     sys.exit(main(sys.argv))
