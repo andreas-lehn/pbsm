@@ -13,6 +13,16 @@ def def_func(stack):
 
 symbol_table['def'] = def_func
 
+def start_list_func(stack):
+    stack.append(START_LIST)
+    
+def end_list_func(stack):
+    stack.append(pop_to_marker(stack, START_LIST))
+
+symbol_table['('] = start_list_func
+symbol_table[')'] = end_list_func
+
+
 class Marker:
     def __init__(self, text):
         self.text = text
@@ -63,9 +73,6 @@ def pop_to_marker(stack, marker):
         object = stack.pop()
     return result
 
-def create_list(stack):
-    stack.append(pop_to_marker(stack, START_LIST))
-
 def create_func(stack):
     stack.append(Function(pop_to_marker(stack, START_FUNC)))
 
@@ -80,7 +87,7 @@ def execute(object):
     if not object: return
 
     if object == END_LIST:
-        create_list(stack)
+        end_list_func(stack)
         return
     
     if object == START_FUNC:
