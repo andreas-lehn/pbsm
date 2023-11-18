@@ -11,7 +11,7 @@ STRING             : ([uU] | [fF] [rR]? | [rR] [fF]?)? (SHORT_STRING | LONG_STRI
                    | ([bB] [rR]? | [rR] [bB]) (SHORT_BYTES | LONG_BYTES)
                    ;
 
-INTEGER            : [1-9] [0-9]*
+INTEGER            : ('-' | '+')? [1-9] [0-9]*
                    | '0'+
                    ;
 
