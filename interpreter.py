@@ -9,34 +9,8 @@ from StackMachineLexer import StackMachineLexer
 import core
 import python
 
-class Marker:
-    def __init__(self, text):
-        self.text = text
-
-    def __repr__(self):
-        return self.text
-
-    def __eq__(self, other):
-        return isinstance(other, Marker) and self.text == other.text
-
-START_LIST  = Marker('[')
-END_LIST    = Marker(']')
-START_FUNC  = Marker('(')
-END_FUNC    = Marker(')')
-START_SCOPE = Marker('{')
-END_SCOPE   = Marker('}')
-MARK_MARKER = Marker('.')
-
-def pop_to_marker(stack, marker):
-    result = list()
-    object = stack.pop()
-    while object != marker:
-        result.insert(0, object)
-        object = stack.pop()
-    return result
-
 def mark(stack):
-    stack.append(MARK_MARKER)
+    stack.append(Interpreter.Marker())
 
 def counttomark(stack):
     last = len(stack) - 1
@@ -54,16 +28,29 @@ def cvlit(stack):
         raise TypeError("Object is not a function")
     stack.append(f.sequence)
 
-def cvx(interpreter, stack):
-    stack.append(Interpreter.Function(interpreter, stack.pop()))
+def def_func(interp, stack):
+    """Takes a symbol and an object from the stack and store the object in the dictionary with the symbols name as key"""
+    procedure = stack.pop()
+    interp.symbol_table[stack.pop().name] = procedure
+
+def exec_func(interp, stack):
+    """Takes an object from the stack and executes it"""
+    interp.execute(stack.pop())
+
+def cvx(interp, stack):
+    list_ = stack.pop()
+    if type(list_) != list:
+        raise TypeError('Object is not a list')
+    stack.append(Interpreter.Function(interp, list_))
+
 
 class Interpreter:
 
     def __init__(self, verbose=False):
         self.stack = []
         self.symbol_table = { 
-            'def': lambda stack: self.def_func(stack),
-            'exec': lambda stack: self.exec_func(stack),
+            'def': lambda stack: def_func(self, stack),
+            'exec': lambda stack: exec_func(self, stack),
             'mark': mark,
             'counttomark': counttomark,
             'cvlit': cvlit,
@@ -72,20 +59,17 @@ class Interpreter:
         self.deffered_mode = 0
         self.verbose = verbose
 
-    def def_func(self, stack):
-        """Takes a symbol and an object from the stack and store the object in the dictionary with the symbols name as key"""
-        procedure = stack.pop()
-        self.symbol_table[stack.pop().name] = procedure
-
-    def exec_func(self, stack):
-        """Takes an object from the stack and executes it"""
-        self.execute(stack.pop())
-
     def register(self, symbols):
         self.symbol_table = { **self.symbol_table, **symbols }
 
+    class Marker:
+        def __repr__(self):
+            return '.'
+
     class Function:
         def __init__(self, interpreter, sequence):
+            if type(sequence) != list:
+                raise TypeError('Object is not a list')
             self.sequence = sequence
             self.interpreter = interpreter
     
@@ -97,8 +81,12 @@ class Interpreter:
             return 'x' + str(self.sequence)
 
     class Symbol:
-        def __init__(self, name):
+        def __init__(self, interp, name):
             self.name = name
+            self.interp = interp
+
+        def __call__(self, stack):
+            self.interp.execute(self.interp.lookup(self))
 
         def __repr__(self):
             return self.name
@@ -108,72 +96,64 @@ class Interpreter:
             self.symbol = symbol
 
         def __repr__(self):
-            return '!' + str(self.symbol)
-
-    def create_func(self):
-        self.stack.append(Interpreter.Function(self, pop_to_marker(self.stack, START_FUNC)))
+            return '&' + str(self.symbol)
+        
+        def __call__(self, stack):
+            stack.append(self.symbol)
 
     def create_list(self):
-        self.stack.append(pop_to_marker(self.stack, START_LIST))
+        result = []
+        object = self.stack.pop()
+        while type(object) != Interpreter.Marker:
+            result.insert(0, object)
+            object = self.stack.pop()
+        self.stack.append(result)
 
-    def lookup_object(self, symbol):
+    def lookup(self, symbol):
         return self.symbol_table[symbol.name]
 
-    def start_scope(self):
-        self.log('Not implemented yet')
-    
-    def end_scope(self):
-        self.log('Not implemented yet')
-    
     def execute(self, object):
-        if object == START_FUNC:
-            self.deffered_mode += 1
-            self.stack.append(object)
-            self.log('Deffered mode: ON')
-        elif object == END_FUNC:
-            self.create_func()
-            self.deffered_mode -= 1
-            self.log('Deffered mode: OFF')#
-        elif object == END_LIST:
-            self.create_list()
-        elif self.deffered_mode:
+        if self.deffered_mode:
             self.stack.append(object)
         else:
-            if object == START_SCOPE:
-                self.start_scope()
-            elif object == END_SCOPE:
-                self.end_scope()
-            elif callable(object):
+            if callable(object):
                 object(self.stack)            
-            elif type(object) == Interpreter.Symbol:
-                self.execute(self.lookup_object(object))
-            elif type(object) == Interpreter.Reference:
-                self.stack.append(object.symbol)
             else:
                 self.stack.append(object)
 
-    def token_to_object(token):
+    def process_token(self, token):
+        self.log(token)
         match token.type:
             case StackMachineLexer.TRUE:
-                return True
+                self.execute(True)
             case StackMachineLexer.FALSE:
-                return False
+                self.execute(False)
             case StackMachineLexer.STRING:
                 if token.text[0:3] == '"""':
-                    return token.text[3:-3]
-                return token.text[1:-1]
+                    self.execute(token.text[3:-3])
+                else:
+                    self.execute(token.text[1:-1])
             case StackMachineLexer.INTEGER:
-                return int(token.text)
+                self.execute(int(token.text))
             case StackMachineLexer.FLOAT:
-                return float(token.text)
-            case StackMachineLexer.MARKER:
-                return Marker(token.text)
+                self.execute(float(token.text))
+            case StackMachineLexer.LIST_START:
+                self.execute(Interpreter.Marker())
+            case StackMachineLexer.XLIST_START:
+                self.deffered_mode += 1
+                self.log('Deffered mode:', self.deffered_mode)
+                self.execute(Interpreter.Marker())
+            case StackMachineLexer.LIST:
+                self.create_list()
+            case StackMachineLexer.XLIST:
+                self.create_list()
+                cvx(self, self.stack)
+                self.deffered_mode -= 1
+                self.log('Deffered mode:', self.deffered_mode)
             case StackMachineLexer.NAME:
-                return Interpreter.Symbol(token.text)
+                self.execute(Interpreter.Symbol(self, token.text))
             case StackMachineLexer.NAME_REF:
-                return Interpreter.Reference(Interpreter.Symbol(token.text[1:]))
-            case _:
-                return None
+                self.execute(Interpreter.Reference(Interpreter.Symbol(self, token.text[1:])))
     
     def log(self, *args):
         if (self.verbose):
@@ -190,9 +170,7 @@ class Interpreter:
             self.log(token)
             if token.type == Token.EOF:
                 break
-            object = Interpreter.token_to_object(token)
-            if object is not None:
-                self.execute(object)
+            self.process_token(token)
 
     def interpret_command(self, command):
         input = InputStream(command)
