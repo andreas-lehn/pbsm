@@ -1,5 +1,8 @@
 # StackMachine in Python
 
+import sys
+import argparse
+
 from antlr4 import FileStream, Token, InputStream
 from StackMachineLexer import StackMachineLexer
 
@@ -23,10 +26,11 @@ def pop_to_marker(stack, marker):
 
 class Interpreter:
 
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.stack = []
         self.symbol_table = { 'def': lambda stack: self.def_func(stack) }
         self.deffered_mode = 0
+        self.verbose = verbose
 
     def def_func(self, stack):
         symbol = stack.pop()
@@ -97,6 +101,8 @@ class Interpreter:
                     return token.text[3:-3]
                 return token.text[1:-1]
             case StackMachineLexer.INTEGER:
+                i = int(token.text)
+                print('token.text =', token.text, ', int() = ', i)
                 return int(token.text)
             case StackMachineLexer.FLOAT:
                 return float(token.text)
@@ -117,10 +123,12 @@ class Interpreter:
         lexer = StackMachineLexer(input)
         while True:
             token = lexer.nextToken()
+            if self.verbose:
+                print(token)
             if token.type == Token.EOF:
                 break
             object = Interpreter.token_to_object(token)
-            if object:
+            if object is not None:
                 self.execute(object)
 
     def interpret_command(self, command):
@@ -153,7 +161,7 @@ def set_func(stack):
     item = stack.pop()
     stack[-1][index] = item
 
-list_extension = {
+python_extension = {
     '(': start_list_func,
     ')': end_list_func,
     'append': append_func,
@@ -184,16 +192,18 @@ stack_extension = {
 }
 
 def main(argv):
-    import argparse
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('filename', nargs='?', type=str, help='name of input file')
-    parser.add_argument('-c', '--command', type=str, help='command to executer')
+    parser.add_argument('filename', nargs='?', type=str, help='name of input file to be interpreted')
+    parser.add_argument('-c', '--command', type=str, help='command to execute')
+    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-s', '--showstack', action='store_true', help='show contents of stack in interactive mode')
+    parser.add_argument('--stack_lenght', type=int, help='sets the length of the stack (in character) shown in interactive mode', default=40)
     args = parser.parse_args()
 
     interpreter = Interpreter()
-    interpreter.register(list_extension)
+    interpreter.register(python_extension)
     interpreter.register(stack_extension)
+    interpreter.verbose = args.verbose
     if args.command:
         interpreter.interpret_command(args.command)
     elif args.filename:
@@ -207,5 +217,4 @@ def main(argv):
             print(interpreter.stack)
         
 if __name__ == '__main__':
-    import sys
     sys.exit(main(sys.argv))

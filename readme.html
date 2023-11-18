@@ -635,7 +635,6 @@ It only need 7 primitives to build up the rest of the scheme universe.</p>
 <li><p><span class="docutils literal">float</span>: Float numbers</p></li>
 <li><p><span class="docutils literal">bool</span></p></li>
 <li><p><span class="docutils literal">string</span></p></li>
-<li><p><span class="docutils literal">list</span>: represented by a pyhton list but syntactically written as a lisp list</p></li>
 <li><p><span class="docutils literal">symbol</span>: a symbol is simply an indentifier of a function or variable</p></li>
 <li><p><span class="docutils literal">path</span>: a sequence of identifiers seperated by a <span class="docutils literal">.</span>.</p></li>
 <li><p><span class="docutils literal">function</span>: a object that executes a list.</p></li>
@@ -645,6 +644,11 @@ It only need 7 primitives to build up the rest of the scheme universe.</p>
 We know from C that this works but that it also has a lot of draw backs.
 All modern languages come with a boolean type.
 This is why I also decided to include this type although it may work without it.</p>
+<p>The data types
+* <span class="docutils literal">list</span>: represented by a pyhton list but syntactically written as a lisp list
+* <span class="docutils literal">2D vector</span>
+* <span class="docutils literal">3D vector</span>
+can be implemented as addons and must not be included in the interpreter.</p>
 </section>
 <section id="commands">
 <h3>Commands</h3>
@@ -652,14 +656,6 @@ This is why I also decided to include this type although it may work without it.
 <ul class="simple">
 <li><p><span class="docutils literal">def</span> to assign a value to an identifier, with is a symbol or a path</p></li>
 <li><p><span class="docutils literal">func</span> creates a function object that executes a list</p></li>
-<li><p><span class="docutils literal">startlist</span>: put a list start marker on the stack (symbol <span class="docutils literal">(</span>)</p></li>
-<li><dl class="simple">
-<dt><span class="docutils literal">createlist</span>: constructs an list object wiht the elements up to the list start marker an puts it on the stack.</dt>
-<dd><p>If the list is executable, it creates a function object for the list.</p>
-</dd>
-</dl>
-</li>
-<li><p><span class="docutils literal">unpack</span>: puts the elements of a list or function on the stack</p></li>
 </ul>
 </blockquote>
 <p>With a path, dictionaries are created implicitly.
