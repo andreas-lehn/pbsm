@@ -20,7 +20,7 @@ FLOAT              : EXPONENT_OR_POINT_FLOAT;
 MARKER             : '(' | ')' | '{' | '}' ;
 
 NAME               : ID_START ID_CONTINUE*;
-NAME_REF           : '`' NAME ;
+NAME_REF           : ':' NAME ;
 
 NEWLINE            : RN                -> channel(HIDDEN);
 WS                 : [ \t]+            -> channel(HIDDEN);

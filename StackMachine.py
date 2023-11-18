@@ -86,7 +86,7 @@ class Interpreter:
             self.symbol = symbol
 
         def __repr__(self):
-            return '`' + str(self.symbol)
+            return '!' + str(self.symbol)
 
     def create_func(self):
         self.stack.append(Interpreter.Function(self, pop_to_marker(self.stack, START_FUNC)))
