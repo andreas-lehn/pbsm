@@ -11,11 +11,11 @@ STRING             : ([uU] | [fF] [rR]? | [rR] [fF]?)? (SHORT_STRING | LONG_STRI
                    | ([bB] [rR]? | [rR] [bB]) (SHORT_BYTES | LONG_BYTES)
                    ;
 
-INTEGER            : ('-' | '+')? [1-9] [0-9]*
+INTEGER            : PREFIX [1-9] [0-9]*
                    | '0'+
                    ;
 
-FLOAT              : EXPONENT_OR_POINT_FLOAT;
+FLOAT              : PREFIX EXPONENT_OR_POINT_FLOAT;
 
 MARKER             : '(' | ')' | '{' | '}' ;
 
@@ -27,6 +27,8 @@ WS                 : [ \t]+            -> channel(HIDDEN);
 COMMENT            : '#' ~[\r\n\f]*    -> channel(HIDDEN);
 
 // Fragments
+
+fragment PREFIX : ('-' | '+')? ;
 
 fragment SHORT_STRING
     : '\'' ('\\' (RN | .) | ~[\\\r\n'])* '\''
