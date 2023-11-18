@@ -47,6 +47,16 @@ def counttomark(stack):
         i -= 1
     stack.append(last - i)
 
+def cvlit(stack):
+    f = stack.pop()
+    if not type(f) == Interpreter.Function:
+        stack.append(f)
+        raise TypeError("Object is not a function")
+    stack.append(f.sequence)
+
+def cvx(interpreter, stack):
+    stack.append(Interpreter.Function(interpreter, stack.pop()))
+
 class Interpreter:
 
     def __init__(self, verbose=False):
@@ -55,7 +65,9 @@ class Interpreter:
             'def': lambda stack: self.def_func(stack),
             'exec': lambda stack: self.exec_func(stack),
             'mark': mark,
-            'counttomark': counttomark
+            'counttomark': counttomark,
+            'cvlit': cvlit,
+            'cvx': lambda stack: cvx(self, stack)
         }
         self.deffered_mode = 0
         self.verbose = verbose
@@ -82,7 +94,7 @@ class Interpreter:
                 self.interpreter.execute(object)
 
         def __repr__(self):
-            return 'f(' + str(self.sequence) + ')'
+            return 'x' + str(self.sequence)
 
     class Symbol:
         def __init__(self, name):
@@ -114,24 +126,23 @@ class Interpreter:
         self.log('Not implemented yet')
     
     def execute(self, object):
-        if self.deffered_mode:
-            if object == END_FUNC:
-                self.create_func()
-                self.deffered_mode = False
-                self.log('Deffered mode: OFF')
-            else:
-                self.stack.append(object)
+        if object == START_FUNC:
+            self.deffered_mode += 1
+            self.stack.append(object)
+            self.log('Deffered mode: ON')
+        elif object == END_FUNC:
+            self.create_func()
+            self.deffered_mode -= 1
+            self.log('Deffered mode: OFF')#
+        elif object == END_LIST:
+            self.create_list()
+        elif self.deffered_mode:
+            self.stack.append(object)
         else:
-            if object == START_FUNC:
-                self.deffered_mode = True
-                self.stack.append(object)
-                self.log('Deffered mode: ON')
-            elif object == START_SCOPE:
+            if object == START_SCOPE:
                 self.start_scope()
             elif object == END_SCOPE:
                 self.end_scope()
-            elif object == END_LIST:
-                self.create_list()
             elif callable(object):
                 object(self.stack)            
             elif type(object) == Interpreter.Symbol:
