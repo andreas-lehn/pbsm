@@ -16,6 +16,13 @@ class Marker:
     def __eq__(self, other):
         return isinstance(other, Marker) and self.text == other.text
 
+START_LIST  = Marker('[')
+END_LIST    = Marker(']')
+START_FUNC  = Marker('(')
+END_FUNC    = Marker(')')
+START_SCOPE = Marker('{')
+END_SCOPE   = Marker('}')
+
 def pop_to_marker(stack, marker):
     result = list()
     object = stack.pop()
@@ -24,18 +31,34 @@ def pop_to_marker(stack, marker):
         object = stack.pop()
     return result
 
+def start_list_func(stack):
+    stack.append(START_LIST)
+    
+def end_list_func(stack):
+    stack.append(pop_to_marker(stack, START_LIST))
+
 class Interpreter:
 
     def __init__(self, verbose=False):
         self.stack = []
-        self.symbol_table = { 'def': lambda stack: self.def_func(stack) }
+        self.symbol_table = { 
+            'def': lambda stack: self.def_func(stack),
+            'exec': lambda stack: self.exec_func(stack),
+            str(START_LIST): start_list_func,
+            str(END_LIST): end_list_func
+        }
         self.deffered_mode = 0
         self.verbose = verbose
 
     def def_func(self, stack):
+        """Takes a symbol and an object from the stack and store the object in the dictionary with the symbols name as key"""
         symbol = stack.pop()
         self.symbol_table[symbol.name] = stack.pop()
-    
+
+    def exec_func(self, stack):
+        """Takes an object from the stack and executes it"""
+        self.execute(stack.pop())
+
     def register(self, symbols):
         self.symbol_table = { **self.symbol_table, **symbols }
 
@@ -58,37 +81,50 @@ class Interpreter:
         def __repr__(self):
             return self.name
 
-    class Reference(Symbol):
-        def __repr__(self):
-            return '`' + self.name
+    class Reference():
+        def __init__(self, symbol):
+            self.symbol = symbol
 
-    START_FUNC = Marker('{')
-    END_FUNC   = Marker('}')
-    
+        def __repr__(self):
+            return '`' + str(self.symbol)
+
     def create_func(self):
-        self.stack.append(Interpreter.Function(self, pop_to_marker(self.stack, Interpreter.START_FUNC)))
+        self.stack.append(Interpreter.Function(self, pop_to_marker(self.stack, START_FUNC)))
 
     def lookup_object(self, symbol):
         return self.symbol_table[symbol.name]
 
+    def start_scope(self):
+        self.log('Not implemented yet')
+    
+    def end_scope(self):
+        self.log('Not implemented yet')
+    
     def execute(self, object):
-        if object == Interpreter.START_FUNC:
-            self.deffered_mode += 1
-        
-        if object == Interpreter.END_FUNC:
-            self.create_func()
-            self.deffered_mode -= 1
-            return
-        
-        if callable(object) and not self.deffered_mode:
-            object(self.stack)
-            return
-            
-        if type(object) == Interpreter.Symbol and not self.deffered_mode:
-            self.execute(self.lookup_object(object))
-            return
-        
-        self.stack.append(object)
+        if self.deffered_mode:
+            if object == END_FUNC:
+                self.create_func()
+                self.deffered_mode = False
+                self.log('Deffered mode: OFF')
+            else:
+                self.stack.append(object)
+        else:
+            if object == START_FUNC:
+                self.deffered_mode = True
+                self.stack.append(object)
+                self.log('Deffered mode: ON')
+            elif object == START_SCOPE:
+                self.start_scope()
+            elif object == END_SCOPE:
+                self.end_scope()
+            elif callable(object):
+                object(self.stack)            
+            elif type(object) == Interpreter.Symbol:
+                self.execute(self.lookup_object(object))
+            elif type(object) == Interpreter.Reference:
+                self.stack.append(object.symbol)
+            else:
+                self.stack.append(object)
 
     def token_to_object(token):
         match token.type:
@@ -101,8 +137,6 @@ class Interpreter:
                     return token.text[3:-3]
                 return token.text[1:-1]
             case StackMachineLexer.INTEGER:
-                i = int(token.text)
-                print('token.text =', token.text, ', int() = ', i)
                 return int(token.text)
             case StackMachineLexer.FLOAT:
                 return float(token.text)
@@ -111,9 +145,13 @@ class Interpreter:
             case StackMachineLexer.NAME:
                 return Interpreter.Symbol(token.text)
             case StackMachineLexer.NAME_REF:
-                return Interpreter.Reference(token.text[1:])
+                return Interpreter.Reference(Interpreter.Symbol(token.text[1:]))
             case _:
                 return None
+    
+    def log(self, *args):
+        if (self.verbose):
+            print(*args)
     
     def interpret_file(self, filename):
         input = FileStream(filename)
@@ -123,8 +161,7 @@ class Interpreter:
         lexer = StackMachineLexer(input)
         while True:
             token = lexer.nextToken()
-            if self.verbose:
-                print(token)
+            self.log(token)
             if token.type == Token.EOF:
                 break
             object = Interpreter.token_to_object(token)
@@ -134,15 +171,6 @@ class Interpreter:
     def interpret_command(self, command):
         input = InputStream(command)
         self.interpret_stream(input)
-    
-
-START_LIST = Marker('(')
-
-def start_list_func(stack):
-    stack.append(START_LIST)
-    
-def end_list_func(stack):
-    stack.append(pop_to_marker(stack, START_LIST))
 
 def append_func(stack):
     item = stack.pop()
@@ -162,8 +190,6 @@ def set_func(stack):
     stack[-1][index] = item
 
 python_extension = {
-    '(': start_list_func,
-    ')': end_list_func,
     'append': append_func,
     'extend': extend_func,
     'get': get_func,
