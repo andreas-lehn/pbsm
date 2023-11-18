@@ -204,7 +204,7 @@ def main(argv):
                 line = input(prompt)
                 interpreter.log(line)      
                 interpreter.interpret_command(line)
-            except EOFError:
+            except (EOFError, KeyboardInterrupt):
                 return
             except (RuntimeError, KeyError, TypeError, IndexError) as err:
                 print(type(err).__name__, ':', str(err))
