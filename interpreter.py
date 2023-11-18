@@ -38,6 +38,15 @@ def pop_to_marker(stack, marker):
 def mark(stack):
     stack.append(MARK_MARKER)
 
+def counttomark(stack):
+    last = len(stack) - 1
+    i = last
+    while (i > 0):
+        if type(object) == Marker:
+            break
+        i -= 1
+    stack.append(last - i)
+
 class Interpreter:
 
     def __init__(self, verbose=False):
@@ -45,7 +54,8 @@ class Interpreter:
         self.symbol_table = { 
             'def': lambda stack: self.def_func(stack),
             'exec': lambda stack: self.exec_func(stack),
-            'mark': mark
+            'mark': mark,
+            'counttomark': counttomark
         }
         self.deffered_mode = 0
         self.verbose = verbose

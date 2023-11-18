@@ -53,6 +53,13 @@ def str_(stack):
 def len_(stack):
     stack.append(len(stack.pop()))
 
+def list_(stack):
+    result = []
+    len = int(stack.pop())
+    for i in range(len):
+        result.insert(0, stack.pop())
+    stack.append(result)
+
 commands = {
     'append': append,
     'extend': extend,
@@ -73,6 +80,7 @@ commands = {
     'float': float_,
     'str': str_,
     'int': int_,
-    'len': len_
+    'len': len_,
+    'list': list_
 }
 
