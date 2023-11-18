@@ -17,7 +17,7 @@ INTEGER            : PREFIX [1-9] [0-9]*
 
 FLOAT              : PREFIX EXPONENT_OR_POINT_FLOAT;
 
-MARKER             : '(' | ')' | '{' | '}' ;
+MARKER             : '(' | ')' | '{' | '}' | '[' | ']';
 
 NAME               : ID_START ID_CONTINUE*;
 NAME_REF           : ':' NAME ;
@@ -109,10 +109,13 @@ fragment ID_CONTINUE
 
 /// All characters in general categories Lu, Ll, Lt, Lm, Lo, Nl, the underscore, and characters with the Other_ID_Start property
 fragment ID_START
-    : [!-/]
+    : [!-']
+    | [*-/]
     | [;-@]
     | [A-Z]
+    | '\\'
+    | [^-`]
     | [a-z]
-    | [\u005B-\u0060]
-    | [{-~]
+    | '|'
+    | '~'
     ;

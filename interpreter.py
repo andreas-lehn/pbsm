@@ -25,6 +25,7 @@ START_FUNC  = Marker('(')
 END_FUNC    = Marker(')')
 START_SCOPE = Marker('{')
 END_SCOPE   = Marker('}')
+MARK_MARKER = Marker('.')
 
 def pop_to_marker(stack, marker):
     result = list()
@@ -34,11 +35,8 @@ def pop_to_marker(stack, marker):
         object = stack.pop()
     return result
 
-def start_list_func(stack):
-    stack.append(START_LIST)
-    
-def end_list_func(stack):
-    stack.append(pop_to_marker(stack, START_LIST))
+def mark(stack):
+    stack.append(MARK_MARKER)
 
 class Interpreter:
 
@@ -47,16 +45,15 @@ class Interpreter:
         self.symbol_table = { 
             'def': lambda stack: self.def_func(stack),
             'exec': lambda stack: self.exec_func(stack),
-            str(START_LIST): start_list_func,
-            str(END_LIST): end_list_func
+            'mark': mark
         }
         self.deffered_mode = 0
         self.verbose = verbose
 
     def def_func(self, stack):
         """Takes a symbol and an object from the stack and store the object in the dictionary with the symbols name as key"""
-        symbol = stack.pop()
-        self.symbol_table[symbol.name] = stack.pop()
+        procedure = stack.pop()
+        self.symbol_table[stack.pop().name] = procedure
 
     def exec_func(self, stack):
         """Takes an object from the stack and executes it"""
@@ -94,6 +91,9 @@ class Interpreter:
     def create_func(self):
         self.stack.append(Interpreter.Function(self, pop_to_marker(self.stack, START_FUNC)))
 
+    def create_list(self):
+        self.stack.append(pop_to_marker(self.stack, START_LIST))
+
     def lookup_object(self, symbol):
         return self.symbol_table[symbol.name]
 
@@ -120,6 +120,8 @@ class Interpreter:
                 self.start_scope()
             elif object == END_SCOPE:
                 self.end_scope()
+            elif object == END_LIST:
+                self.create_list()
             elif callable(object):
                 object(self.stack)            
             elif type(object) == Interpreter.Symbol:
