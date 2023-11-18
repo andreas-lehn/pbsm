@@ -6,6 +6,9 @@ import argparse
 from antlr4 import FileStream, Token, InputStream
 from StackMachineLexer import StackMachineLexer
 
+import core
+import python
+
 class Marker:
     def __init__(self, text):
         self.text = text
@@ -172,51 +175,6 @@ class Interpreter:
         input = InputStream(command)
         self.interpret_stream(input)
 
-def append_func(stack):
-    item = stack.pop()
-    stack[-1].append(item)
-
-def extend_func(stack):
-    item = stack.pop()
-    stack[-1].extend(item)
-
-def get_func(stack):
-    index = int(stack.pop())
-    stack.append(stack[-1][index])
-
-def set_func(stack):
-    index = int(stack.pop())
-    item = stack.pop()
-    stack[-1][index] = item
-
-python_extension = {
-    'append': append_func,
-    'extend': extend_func,
-    'get': get_func,
-    'set': set_func
-}
-
-def dup_func(stack):
-    stack.append(stack[-1])
-
-def ndup_func(stack):
-    n = int(stack.pop())
-    object = stack[-1]
-    for i in range(n):
-        stack.append(object)
-
-def swap_func(stack):
-    a = stack.pop()
-    b = stack.pop()
-    stack.append(a)
-    stack.append(b)
-
-stack_extension = {
-    'dup': dup_func,
-    'ndup': ndup_func,
-    'swap': swap_func
-}
-
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', nargs='?', type=str, help='name of input file to be interpreted')
@@ -227,8 +185,8 @@ def main(argv):
     args = parser.parse_args()
 
     interpreter = Interpreter()
-    interpreter.register(python_extension)
-    interpreter.register(stack_extension)
+    interpreter.register(core.commands)
+    interpreter.register(python.commands)
     interpreter.verbose = args.verbose
     if args.command:
         interpreter.interpret_command(args.command)
