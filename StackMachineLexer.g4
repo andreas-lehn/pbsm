@@ -109,7 +109,10 @@ fragment ID_CONTINUE
 
 /// All characters in general categories Lu, Ll, Lt, Lm, Lo, Nl, the underscore, and characters with the Other_ID_Start property
 fragment ID_START
-    : '_' | '[' | ']'
+    : [!-/]
+    | [;-@]
     | [A-Z]
     | [a-z]
+    | [\u005B-\u0060]
+    | [{-~]
     ;
