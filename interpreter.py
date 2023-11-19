@@ -31,7 +31,7 @@ def cvlit(stack):
 def def_func(interp, stack):
     """Takes a symbol and an object from the stack and store the object in the dictionary with the symbols name as key"""
     procedure = stack.pop()
-    interp.symbol_table[stack.pop().name] = procedure
+    interp.symbol_tables[-1][stack.pop().name] = procedure
 
 def exec_func(interp, stack):
     """Takes an object from the stack and executes it"""
@@ -48,19 +48,20 @@ class Interpreter:
 
     def __init__(self, verbose=False):
         self.stack = []
-        self.symbol_table = { 
+        self.symbol_tables = []
+        self.register({ 
             'def': lambda stack: def_func(self, stack),
             'exec': lambda stack: exec_func(self, stack),
             'mark': mark,
             'counttomark': counttomark,
             'cvlit': cvlit,
             'cvx': lambda stack: cvx(self, stack)
-        }
+        })
         self.deffered_mode = 0
         self.verbose = verbose
 
     def register(self, symbols):
-        self.symbol_table = { **self.symbol_table, **symbols }
+        self.symbol_tables.append(symbols)
 
     class Marker:
         def __repr__(self):
@@ -85,8 +86,17 @@ class Interpreter:
             self.name = name
             self.interp = interp
 
+        def lookup(self, dict):
+            if self.name in dict.keys():
+                return dict[self.name]
+            return None
+        
         def __call__(self, stack):
-            self.interp.execute(self.interp.lookup(self))
+            object = self.interp.lookup(self)
+            if object:
+                self.interp.execute(object)
+            else:
+                raise KeyError('symbol not defined', self.name)
 
         def __repr__(self):
             return self.name
@@ -110,7 +120,15 @@ class Interpreter:
         self.stack.append(result)
 
     def lookup(self, symbol):
-        return self.symbol_table[symbol.name]
+        result = None
+        for i in range(-1, -len(self.symbol_tables) - 1, -1):
+            result = symbol.lookup(self.symbol_tables[i])
+            if result:
+                break
+        return result
+    
+    def lookup_deffered(self, symbol):
+        return symbol.lookup(self.symbol_tables[0])
 
     def execute(self, object):
         if self.deffered_mode:
