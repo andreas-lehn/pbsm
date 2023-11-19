@@ -23,7 +23,7 @@ LIST               : ']' ;
 XLIST              : '}' ;
 
 NAME               : ID_START ID_CONTINUE*;
-NAME_REF           : ':' NAME ;
+NAME_REF           : '/' NAME ;
 
 NEWLINE            : RN                -> channel(HIDDEN);
 WS                 : [ \t]+            -> channel(HIDDEN);
@@ -112,8 +112,8 @@ fragment ID_CONTINUE
 
 /// All characters in general categories Lu, Ll, Lt, Lm, Lo, Nl, the underscore, and characters with the Other_ID_Start property
 fragment ID_START
-    : [!-/]
-    | [;-@]
+    : [!-.]
+    | [:-@]
     | [A-Z]
     | '\\'
     | [^-`]

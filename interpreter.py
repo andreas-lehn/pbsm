@@ -16,14 +16,14 @@ def counttomark(stack):
     last = len(stack) - 1
     i = last
     while (i > 0):
-        if type(object) == Marker:
+        if type(object) == Interpreter.Marker:
             break
         i -= 1
     stack.append(last - i)
 
 def cvlit(stack):
     f = stack.pop()
-    if not type(f) == Interpreter.Function:
+    if not type(f) == Interpreter.Procedure:
         stack.append(f)
         raise TypeError("Object is not a function")
     stack.append(f.sequence)
@@ -41,7 +41,7 @@ def cvx(interp, stack):
     list_ = stack.pop()
     if type(list_) != list:
         raise TypeError('Object is not a list')
-    stack.append(Interpreter.Function(interp, list_))
+    stack.append(Interpreter.Procedure(interp, list_))
 
 
 class Interpreter:
@@ -66,7 +66,7 @@ class Interpreter:
         def __repr__(self):
             return '.'
 
-    class Function:
+    class Procedure:
         def __init__(self, interpreter, sequence):
             if type(sequence) != list:
                 raise TypeError('Object is not a list')
