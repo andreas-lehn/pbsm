@@ -1,7 +1,4 @@
-all: readme.html StackMachineLexer.py
+all: readme.html
 
 %.html: %.rst
 	python -m docutils $< $@
-
-%.py: %.g4
-	antlr -Dlanguage=Python3 $<

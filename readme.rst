@@ -1,5 +1,5 @@
 ##############################
-Python stack machine
+Python-based stack machine
 ##############################
 
 This work is inspired by Sven Havemann with his work on Generative Modelling.
