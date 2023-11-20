@@ -4,4 +4,4 @@ all: Lexer.py
 	python -m docutils $< $@
 
 %.py: %.g4
-	antlr -Dlanguage=Python3 $<
+	antlr4 -Dlanguage=Python3 $<
