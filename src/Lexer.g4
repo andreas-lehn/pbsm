@@ -1,6 +1,6 @@
-/* Stack machine  grammar. */
+/* Python based stack machine grammar. */
 
-lexer grammar StackMachineLexer;
+lexer grammar Lexer;
 
 // Keywords
 

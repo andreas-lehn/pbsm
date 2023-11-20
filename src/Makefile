@@ -1,4 +1,4 @@
-all: StackMachineLexer.py
+all: Lexer.py
 
 %.html: %.rst
 	python -m docutils $< $@

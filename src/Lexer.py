@@ -1,4 +1,4 @@
-# Generated from StackMachineLexer.g4 by ANTLR 4.13.1
+# Generated from Lexer.g4 by ANTLR 4.13.1
 from antlr4 import *
 from io import StringIO
 import sys
@@ -138,7 +138,7 @@ def serializedATN():
         299,303,306,309,312,319,322,1,0,1,0
     ]
 
-class StackMachineLexer(Lexer):
+class Lexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -174,7 +174,7 @@ class StackMachineLexer(Lexer):
                   "LONG_BYTES_CHAR", "BYTES_ESCAPE_SEQ", "ID_CONTINUE", 
                   "ID_START" ]
 
-    grammarFileName = "StackMachineLexer.g4"
+    grammarFileName = "Lexer.g4"
 
     def __init__(self, input=None, output:TextIO = sys.stdout):
         super().__init__(input, output)

@@ -4,7 +4,7 @@ import sys
 import argparse
 
 from antlr4 import FileStream, Token, InputStream
-from StackMachineLexer import StackMachineLexer
+from Lexer import Lexer
 
 import core
 import python
@@ -190,22 +190,22 @@ class Interpreter:
     def process_token(self, token):
         self.log(token)
         match token.type:
-            case StackMachineLexer.TRUE:
+            case Lexer.TRUE:
                 self.execute(True)
-            case StackMachineLexer.FALSE:
+            case Lexer.FALSE:
                 self.execute(False)
-            case StackMachineLexer.STRING:
+            case Lexer.STRING:
                 if token.text[0:3] == '"""':
                     self.execute(token.text[3:-3])
                 else:
                     self.execute(token.text[1:-1])
-            case StackMachineLexer.INTEGER:
+            case Lexer.INTEGER:
                 self.execute(int(token.text))
-            case StackMachineLexer.FLOAT:
+            case Lexer.FLOAT:
                 self.execute(float(token.text))
-            case StackMachineLexer.NAME:
+            case Lexer.NAME:
                 self.execute(Interpreter.Symbol(self, token.text))
-            case StackMachineLexer.NAME_REF:
+            case Lexer.NAME_REF:
                 self.execute(Interpreter.Reference(Interpreter.Symbol(self, token.text[1:])))
     
     def log(self, *args):
@@ -217,7 +217,7 @@ class Interpreter:
         self.interpret_stream(input)
     
     def interpret_stream(self, input):
-        lexer = StackMachineLexer(input)
+        lexer = Lexer(input)
         while True:
             token = lexer.nextToken()
             self.log(token)
