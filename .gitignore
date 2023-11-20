@@ -6,3 +6,5 @@ lib
 lib pyvenv.cfg
 __pycache__/
 pyvenv.cfg
+lib64
+readme.html
