@@ -2,118 +2,82 @@
 Python-based stack machine
 ##############################
 
-This work is inspired by Sven Havemann with his work on Generative Modelling.
-The idea is to create a core stack machine in Python that can be extended simple by Pyhton.
-*Core* means that it is boiled down to its bare minimum.
-All the rest is down with extensions.
+This work is inspired by Sven Havemanns work on `Generative Modelling <https://en.wikipedia.org/wiki/Generative_Modelling_Language>`_.
+The idea is to create a stack machine in Python that is minimalistic but easy to extended.
+*Minimalistic* means that it is boiled down to its bare minimum.
+All the rest is down with extensions written in Python
 
-Sven has oriented himself at the Postscript interpreter.
-Scheme is an approach to boil down Lisp to its bare minimum.
-It only need 7 primitives to build up the rest of the scheme universe.
+Sven has oriented himself at the Postscript interpreter and so is this state machine.
+Because it is based on Python, there are a few differences to the Postscript stack machine:
 
-The stack machine works a follows:
+ * All objects on the stack are Python objects.
+ * Postscript uses ``()`` to denote strings.
+   PBSM uses the standard Python syntax for strings: ``'``, ``"`` or ``"""`` enclose a valid string.
+ * Postscript use ```/``` to push a literal on the stack. PBSM uses ``'`` instead.
+   This makes the syntax more consistent and uses less characters with special meaning.
 
-#. It tokenizes its input stream
-#. It executes the tokens one after each other.
-    If the token is not executable, its value is put on the stack.
-
-
-What is in the core
-===================
 
 Datatypes
----------
+===================
 
-The built-in data types are:
+PBSM uses standard object types of Python: ``int``, ``float``, ``string``, ``bool`` and ``list``.
+It introduces the following types:
 
- * ``int``: Integer numbers represented with the Python type ``int``  
- * ``float``: Float numbers
- * ``bool``
- * ``string``
- * ``symbol``: a symbol is simply an indentifier of a function or variable 
- * ``path``: a sequence of identifiers seperated by a ``.``.
- * ``function``: a object that executes a list.
-
-Sven decided against a boolean data type.
-We know from C that this works but that it also has a lot of draw backs.
-All modern languages come with a boolean type.
-This is why I also decided to include this type although it may work without it.
-
-The data types 
-* ``list``: represented by a pyhton list but syntactically written as a lisp list
-* ``2D vector``
-* ``3D vector``
-can be implemented as addons and must not be included in the interpreter.
+ * ``Marker`` to denote the start of a list/executable list.
+ * ``Symbol`` for a symbolic name.
+ * ``Reference`` references a symbol
+ * ``Procedure`` represents an executable list.
 
  
 Commands
---------
+=========
 
- * ``def`` to assign a value to an identifier, with is a symbol or a path
- * ``func`` creates a function object that executes a list
- 
-With a path, dictionaries are created implicitly.
-The command:
+The core interpreter comes with a few commands only.
+These are:
 
-    5.0 origin.x def 
+ * ``[`` together with ``]`` creates the a list.
+ * ``{`` together with ``}`` creates an executable list/a procedure.
+ * ``cvx`` converts a list to an executable list/procedure
+ * ``cvlit`` converts an executable list/procedure back to a normal/litaral list
+ * ``def`` assigns a value to a symbol.
+ * ``exec`` executes the object on the stack.
+ * ``mark`` puts a mark on the stack
+ * ``counttomark`` counts the elements on the stack up to the topmost mark
+ * ``cleartomark`` removes all objects from the stack up to the topmost mark but not the mark itself.
 
-creates a dictionary ``origin`` and puts a key/value pair ``'x': 5.0`` in it.
-
-
-What is not included
-====================
-
-Sven put a 2D an 3D vector type in his machine.
-This is not necessary. 
-It can be done easily with extention.
-Maybe a numpy extention could solve all this.
-
-Sven called lists *arrays*.
-The term *list* is equivalent to Svens arrays.
-
-Sven defined registers.
-I think because Postscript has registers.
-I don't see the difference between a register and a value assigned to a symbol.
-So I do not include registers and try it only with symbols/paths.
-
-Postscript defines scopes with ``begin`` and ``end``.
-I do not have scopes yet.
-But a have a pair of brackets (``[]``) left to create scopes.
+That's it. All the rest is done with extensions.
 
 
-Extensibility
+Execution
 ===============
 
 The stack machine maintains a stack of dictionaries in which the values of the symbols are stored.
-Every extention can register a dictionary with name/function pairs.
-The machine tries to resolve the symbol by looking in each of the dictionaries.
-If it finds a value, it executes the value or puts it on the stack.
+Every extention can register a dictionary with name/object pairs.
+Callable objects are executable.
+The machine tries to resolve the symbol by looking in each of the dictionaries in a top-down fashen.
+If it finds a value, it executes the value.
+*Execution* means:
 
-
-Grammar
-========
-
-The grammar is defined in an ``antlr`` file.
-
+ * If the object is callable, it is called.
+ * If it is a symbol, the symbol is looked up and the process starts again recursively.
+ * All other objects are put on the stack.
 
 
 Examples
 =========
 
-List creation:
+List creation::
 
-    ( 5.0 true "hello" )
+    [ 5.0 True "hello" ]
 
-Executable list creation:
+Executable list creation::
 
     { dup print }
 
-This is syntactial sugar for:
+This is syntactial sugar for::
 
-    ( dup 'print) func
+    [ 'dup 'print ] cvx
 
-Function definitaion:
+Procedure definitaion::
 
-    { dup mult } 'sqrt def
-
-
+    'average { 2 div } def
