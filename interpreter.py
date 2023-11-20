@@ -9,53 +9,25 @@ from StackMachineLexer import StackMachineLexer
 import core
 import python
 
-def mark(stack):
-    stack.append(Interpreter.Marker())
-
-def counttomark(stack):
-    last = len(stack) - 1
-    i = last
-    while (i > 0):
-        if type(object) == Interpreter.Marker:
-            break
-        i -= 1
-    stack.append(last - i)
-
-def cvlit(stack):
-    f = stack.pop()
-    if not type(f) == Interpreter.Procedure:
-        stack.append(f)
-        raise TypeError("Object is not a function")
-    stack.append(f.sequence)
-
-def def_func(interp, stack):
-    """Takes a symbol and an object from the stack and store the object in the dictionary with the symbols name as key"""
-    procedure = stack.pop()
-    interp.symbol_tables[-1][stack.pop().name] = procedure
-
-def exec_func(interp, stack):
-    """Takes an object from the stack and executes it"""
-    interp.execute(stack.pop())
-
-def cvx(interp, stack):
-    list_ = stack.pop()
-    if type(list_) != list:
-        raise TypeError('Object is not a list')
-    stack.append(Interpreter.Procedure(interp, list_))
-
-
 class Interpreter:
 
     def __init__(self, verbose=False):
         self.stack = []
         self.symbol_tables = []
         self.register({ 
-            'def': lambda stack: def_func(self, stack),
-            'exec': lambda stack: exec_func(self, stack),
-            'mark': mark,
-            'counttomark': counttomark,
-            'cvlit': cvlit,
-            'cvx': lambda stack: cvx(self, stack)
+            '{': Interpreter.start_proc,
+            '[': Interpreter.mark,
+            '}': Interpreter.make_proc,
+            ']': Interpreter.make_list
+        })
+        self.register({ 
+            'def': Interpreter.def_,
+            'exec': Interpreter.exec,
+            'mark': Interpreter.mark,
+            'counttomark': Interpreter.count_to_mark,
+            'cleartomark': Interpreter.pop_to_mark,
+            'cvlit': Interpreter.cvlit,
+            'cvx': Interpreter.cvx
         })
         self.deffered_mode = 0
         self.verbose = verbose
@@ -63,24 +35,61 @@ class Interpreter:
     def register(self, symbols):
         self.symbol_tables.append(symbols)
 
+    def enter_deffered_mode(self):
+        self.deffered_mode += 1
+
+    def exit_deffered_mode(self):
+        self.deffered_mode -= 1
+
+    def in_deffered_mode(self):
+        return self.deffered_mode > 0
+    
+    def push(self, item):
+        self.stack.append(item)
+    
+    def pop(self, type=object):
+        item = self.stack.pop()
+        if not isinstance(item, type):
+            raise TypeError(f'item {item} ({type(item)} is not an instance of {type}')
+        return item
+    
+    def peek(self, offset=0):
+        return self.stack[offset - 1]
+    
+    def append(self, item):
+        self.stack.append(item)
+
+    def __get__(self, index):
+        return self.stack[index]
+    
+    def __set__(self, index, item):
+        self.stack[index] = item
+
     class Marker:
         def __repr__(self):
             return '.'
 
-    class Procedure:
-        def __init__(self, interpreter, sequence):
-            if type(sequence) != list:
-                raise TypeError('Object is not a list')
-            self.sequence = sequence
-            self.interpreter = interpreter
+    def mark(self):
+        self.push(Interpreter.Marker())
+
+    def pop_to_mark(self):
+        result = []
+        while not isinstance(self.peek(), Interpreter.Marker):
+            result.insert(0, self.pop())
+        return result
+
+    def count_to_mark(self):
+        count = 0
+        for obj in reversed(self.stack):
+            if isinstance(obj, Interpreter.Marker): break
+            count += 1
+        self.push(count)
+
+    def make_list(self):
+        sequence = self.pop_to_mark()
+        self.pop() # drop mark
+        self.push(sequence)
     
-        def __call__(self, stack):
-            for object in self.sequence:
-                self.interpreter.execute(object)
-
-        def __repr__(self):
-            return 'x' + str(self.sequence)
-
     class Symbol:
         def __init__(self, interp, name):
             self.name = name
@@ -91,53 +100,92 @@ class Interpreter:
                 return dict[self.name]
             return None
         
-        def __call__(self, stack):
-            object = self.interp.lookup(self)
-            if object:
-                self.interp.execute(object)
-            else:
-                raise KeyError('symbol not defined', self.name)
-
         def __repr__(self):
             return self.name
+
+    def def_(self):
+        """Takes a symbol and an object from the stack and store the object in the dictionary with the symbols name as key"""
+        item = self.pop()
+        symbol = self.pop(Interpreter.Symbol)
+        self.symbol_tables[-1][symbol.name] = item
+
+    def lookup(self, symbol):
+        assert(isinstance(symbol, Interpreter.Symbol))
+        result = None
+        if self.in_deffered_mode():
+            result = symbol.lookup(self.symbol_tables[0])
+        else:
+            for i in range(-1, -len(self.symbol_tables) - 1, -1):
+                result = symbol.lookup(self.symbol_tables[i])
+                if result:
+                    break
+        return result
+    
+    class Procedure:
+        def __init__(self, sequence):
+            if not isinstance(sequence, list):
+                raise TypeError('Object is not a list')
+            self.sequence = sequence
+    
+        def __call__(self, interp):
+            for object in self.sequence:
+                interp.execute(object)
+
+        def __repr__(self):
+            return 'x' + str(self.sequence)
+
+    def start_proc(self):
+        self.mark()
+        self.enter_deffered_mode()
+    
+    def make_proc(self):
+        self.make_list()
+        self.cvx()
+        self.exit_deffered_mode()
+
+    def cvlit(self):
+        """convert to literatl"""
+        proc = self.pop(Interpreter.Procedure)
+        self.push(proc.sequence)
+
+    def cvx(self):
+        """convert to executable"""
+        self.push(Interpreter.Procedure(self.pop(list)))
+
+    def exec(self):
+        """executes the object on the stack"""
+        self.execute(self.pop())
 
     class Reference():
         def __init__(self, symbol):
             self.symbol = symbol
 
         def __repr__(self):
-            return '&' + str(self.symbol)
+            return "'" + str(self.symbol)
         
         def __call__(self, stack):
             stack.append(self.symbol)
 
-    def create_list(self):
-        result = []
-        object = self.stack.pop()
-        while type(object) != Interpreter.Marker:
-            result.insert(0, object)
-            object = self.stack.pop()
-        self.stack.append(result)
-
-    def lookup(self, symbol):
-        result = None
-        for i in range(-1, -len(self.symbol_tables) - 1, -1):
-            result = symbol.lookup(self.symbol_tables[i])
-            if result:
-                break
-        return result
-    
-    def lookup_deffered(self, symbol):
-        return symbol.lookup(self.symbol_tables[0])
-
-    def execute(self, object):
-        if self.deffered_mode:
-            self.stack.append(object)
-        else:
-            if callable(object):
-                object(self.stack)            
+    def execute(self, obj):
+        if self.in_deffered_mode():
+            if isinstance(obj, Interpreter.Symbol):
+                referee = self.lookup(obj)
+                if referee:
+                    referee(self)
+                else:
+                    self.push(obj)
             else:
-                self.stack.append(object)
+                self.push(obj)
+        else:
+            if callable(obj):
+                obj(self)
+            elif type(obj) == Interpreter.Symbol:
+                referee = self.lookup(obj)
+                if not referee:
+                    raise KeyError(f'symbol {obj} not defined.')
+                self.execute(referee)      
+            else:
+                self.push(obj)
 
     def process_token(self, token):
         self.log(token)
@@ -155,19 +203,6 @@ class Interpreter:
                 self.execute(int(token.text))
             case StackMachineLexer.FLOAT:
                 self.execute(float(token.text))
-            case StackMachineLexer.LIST_START:
-                self.execute(Interpreter.Marker())
-            case StackMachineLexer.XLIST_START:
-                self.deffered_mode += 1
-                self.log('Deffered mode:', self.deffered_mode)
-                self.execute(Interpreter.Marker())
-            case StackMachineLexer.LIST:
-                self.create_list()
-            case StackMachineLexer.XLIST:
-                self.create_list()
-                cvx(self, self.stack)
-                self.deffered_mode -= 1
-                self.log('Deffered mode:', self.deffered_mode)
             case StackMachineLexer.NAME:
                 self.execute(Interpreter.Symbol(self, token.text))
             case StackMachineLexer.NAME_REF:
@@ -221,11 +256,10 @@ def main(argv):
             prompt = stack + PROMPT
             try:
                 line = input(prompt)
-                interpreter.log(line)      
                 interpreter.interpret_command(line)
             except (EOFError, KeyboardInterrupt):
                 return
-            except (RuntimeError, KeyError, TypeError, IndexError) as err:
+            except (RuntimeError, KeyError, TypeError, IndexError, ValueError) as err:
                 print(type(err).__name__, ':', str(err))
         
 if __name__ == '__main__':

@@ -1,30 +1,30 @@
-# core extension of Python based stack machine
+# core extension of Python based interp machine
 
 import sys
 
-def dup(stack):
-    stack.append(stack[-1])
+def dup(interp):
+    interp.push(interp.peek())
 
-def ndup(stack):
-    n = int(stack.pop())
-    object = stack[-1]
-    for i in range(n):
-        stack.append(object)
+def ndup(interp):
+    n = int(interp.pop())
+    object = interp.peek()
+    for _ in range(n):
+        interp.push(object)
 
-def swap(stack):
-    a = stack.pop()
-    b = stack.pop()
-    stack.append(a)
-    stack.append(b)
+def swap(interp):
+    a = interp.pop()
+    b = interp.pop()
+    interp.push(a)
+    interp.push(b)
 
-def pop(stack):
-    stack.pop()
+def pop(interp):
+    interp.pop()
 
-def exit(stack):
+def exit(interp):
     sys.exit()
 
-def exit_with_code(stack):
-    sys.exit(stack.pop())
+def exit_with_code(interp):
+    sys.exit(interp.pop())
 
 commands = {
     'dup': dup,

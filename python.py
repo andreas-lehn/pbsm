@@ -1,64 +1,64 @@
 # Python extension for Python based stack machine
 
-def append(stack):
-    item = stack.pop()
-    stack[-1].append(item)
+def append(interp):
+    item = interp.pop()
+    interp.peek().append(item)
 
-def extend(stack):
-    item = stack.pop()
-    stack[-1].extend(item)
+def extend(interp):
+    item = interp.pop()
+    interp.peek().extend(item)
 
-def get(stack):
-    index = int(stack.pop())
-    stack.append(stack[-1][index])
+def get(interp):
+    index = int(interp.pop())
+    interp.push(interp[-1][index])
 
-def set(stack):
-    index = int(stack.pop())
-    item = stack.pop()
-    stack[-1][index] = item
+def set(interp):
+    index = int(interp.pop())
+    item = interp.pop()
+    interp.peek()[index] = item
 
-def add(stack):
-    stack.append(stack.pop() + stack.pop())
+def add(interp):
+    interp.push(interp.pop() + interp.pop())
 
-def sub(stack):
-    operand = stack.pop()
-    stack.append(stack.pop() - operand)
+def sub(interp):
+    operand = interp.pop()
+    interp.push(interp.pop() - operand)
 
-def mul(stack):
-    stack.append(stack.pop() * stack.pop())
+def mul(interp):
+    interp.push(interp.pop() * interp.pop())
 
-def div(stack):
-    operand = stack.pop()
-    stack.append(stack.pop() / operand)
+def div(interp):
+    operand = interp.pop()
+    interp.push(interp.pop() / operand)
 
-def power(stack):
-    operand = stack.pop()
-    stack.append(stack.pop() ** operand)
+def power(interp):
+    operand = interp.pop()
+    interp.push(interp.pop() ** operand)
 
-def neg(stack):
-    stack.append(-stack.pop())
+def neg(interp):
+    interp.push(-interp.pop())
 
-def int_(stack):
-    stack.append(int(stack.pop()))
+def int_(interp):
+    interp.push(int(interp.pop()))
 
-def bool_(stack):
-    stack.append(bool(stack.pop()))
+def bool_(interp):
+    interp.push(bool(interp.pop()))
 
-def float_(stack):
-    stack.append(float(stack.pop()))
+def float_(interp):
+    interp.push(float(interp.pop()))
 
-def str_(stack):
-    stack.append(str(stack.pop()))
+def str_(interp):
+    interp.push(str(interp.pop()))
 
-def len_(stack):
-    stack.append(len(stack.pop()))
+def len_(interp):
+    interp.push(len(interp.pop()))
 
-def list_(stack):
+def list_(interp):
     result = []
-    len = int(stack.pop())
+    len = int(interp.pop())
     for i in range(len):
-        result.insert(0, stack.pop())
-    stack.append(result)
+        result.insert(0, interp.pop())
+    interp.push(result)
 
 commands = {
     'append': append,
@@ -83,4 +83,3 @@ commands = {
     'len': len_,
     'list': list_
 }
-
