@@ -7,7 +7,6 @@ from antlr4 import FileStream, Token, InputStream
 from Lexer import Lexer
 
 import core
-import python
 
 class Interpreter:
 
@@ -188,7 +187,6 @@ class Interpreter:
                 self.push(obj)
 
     def process_token(self, token):
-        self.log(token)
         match token.type:
             case Lexer.TRUE:
                 self.execute(True)
@@ -212,42 +210,38 @@ class Interpreter:
         if (self.verbose):
             print(*args)
     
-    def interpret_file(self, filename):
-        input = FileStream(filename)
-        self.interpret_stream(input)
-    
-    def interpret_stream(self, input):
+    def interpret(self, input):
         lexer = Lexer(input)
         while True:
             token = lexer.nextToken()
-            self.log(token)
+            self.log('next token in stream:', token)
             if token.type == Token.EOF:
                 break
             self.process_token(token)
 
-    def interpret_command(self, command):
-        input = InputStream(command)
-        self.interpret_stream(input)
-
-def main(argv):
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', nargs='?', type=str, help='name of input file to be interpreted')
     parser.add_argument('-c', '--command', type=str, help='command to execute')
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-n', '--nacked', action='store_true')
     parser.add_argument('-s', '--show_stack', action='store_true', help='show contents of stack in interactive mode')
     parser.add_argument('--stack_length', type=int, help='sets the length of the stack (in character) shown in interactive mode', default=40)
     args = parser.parse_args()
 
     interpreter = Interpreter()
-    interpreter.register(core.commands)
-    interpreter.register(python.commands)
     interpreter.verbose = args.verbose
+    if not args.nacked:
+        interpreter.log('core extension loaded.')
+        interpreter.register(core.commands)
     if args.command:
-        interpreter.interpret_command(args.command)
+        interpreter.log('execution command:', args.command)
+        interpreter.interpret(InputStream(args.command))
     elif args.filename:
-        interpreter.interpret_file(args.filename)
+        interpreter.log('interpreting file', args.filename)
+        interpreter.interpret(FileStream(args.filename))
     else:
-        # interactive mode
+        interpreter.log('entering interactive mode')
         PROMPT = '> '
         while True:
             stack = ''
@@ -256,11 +250,11 @@ def main(argv):
             prompt = stack + PROMPT
             try:
                 line = input(prompt)
-                interpreter.interpret_command(line)
+                interpreter.interpret(InputStream(line))
             except (EOFError, KeyboardInterrupt):
                 return
             except (RuntimeError, KeyError, TypeError, IndexError, ValueError) as err:
-                print(type(err).__name__, ':', str(err))
+                print(type(err).__name__, ':', str(err), file=sys.stderr)
         
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    sys.exit(main())
