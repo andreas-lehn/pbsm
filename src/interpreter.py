@@ -187,6 +187,7 @@ class Interpreter:
                 self.push(obj)
 
     def process_token(self, token):
+        self.log('processing token:', token)
         match token.type:
             case Lexer.TRUE:
                 self.execute(True)
@@ -214,7 +215,6 @@ class Interpreter:
         lexer = Lexer(input)
         while True:
             token = lexer.nextToken()
-            self.log('next token in stream:', token)
             if token.type == Token.EOF:
                 break
             self.process_token(token)
