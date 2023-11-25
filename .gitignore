@@ -8,3 +8,4 @@ __pycache__/
 pyvenv.cfg
 lib64
 readme.html
+dist
