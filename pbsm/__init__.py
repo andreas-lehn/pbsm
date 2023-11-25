@@ -235,7 +235,7 @@ def main():
     interpreter.verbose = args.verbose
     if not args.nacked:
         interpreter.log('core extension loaded.')
-        interpreter.register(core.commands)
+        interpreter.register(core_commands)
     if args.command:
         interpreter.log('execution command:', args.command)
         interpreter.interpret(InputStream(args.command))
