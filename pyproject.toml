@@ -1,0 +1,23 @@
+[project]
+name = "pbsm"
+authors = [
+    { name = "Andras Lehn", email = "andreas.lehn@icloud.com" }
+]
+dynamic = [ "version" ]
+description = "Python based stack machine"
+readme = "readme.rst"
+dependencies = [
+    "antlr4-python-runtime"
+]
+license = {file = "LICENSE"}
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "pbsm/version.py"
