@@ -3,10 +3,12 @@
 import sys
 import argparse
 
-from antlr4 import FileStream, Token, InputStream
-from Lexer import Lexer
+__author__ = "Andreas Lehn"
+from .version import __version__
 
-import core
+from antlr4 import FileStream, Token, InputStream
+from .Lexer import Lexer
+from .core import commands as core_commands
 
 class Interpreter:
 
