@@ -7,7 +7,7 @@ dynamic = [ "version" ]
 description = "Python based stack machine"
 readme = "readme.rst"
 dependencies = [
-    "antlr4-python-runtime"
+    "antlr4-python3-runtime"
 ]
 license = {file = "LICENSE"}
 classifiers = [
