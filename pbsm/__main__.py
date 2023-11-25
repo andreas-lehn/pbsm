@@ -9,7 +9,7 @@ from .version import __version__
 from .__init__ import Interpreter
 from .core import commands as core_commands
 
-from antlr4 import FileStream, Token, InputStream
+from antlr4 import FileStream, InputStream
 
 def main():
     parser = argparse.ArgumentParser()
