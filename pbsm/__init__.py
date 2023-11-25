@@ -3,9 +3,8 @@
 __author__ = "Andreas Lehn"
 from .version import __version__
 
-from antlr4 import FileStream, Token, InputStream
+from antlr4 import Token
 from .Lexer import Lexer
-from .core import commands as core_commands
 
 class Interpreter:
 
