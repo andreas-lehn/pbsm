@@ -29,8 +29,10 @@ class Interpreter:
         self.deffered_mode = 0
         self.verbose = verbose
 
-    def register(self, symbols):
-        self.symbol_tables.append(symbols)
+    def register(self, commands):
+        if not isinstance(commands, dict):
+            raise TypeError('commands is not of type dict')
+        self.symbol_tables.append(commands)
 
     def enter_deffered_mode(self):
         self.deffered_mode += 1
