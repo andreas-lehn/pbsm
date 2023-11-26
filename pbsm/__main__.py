@@ -28,13 +28,14 @@ def main():
     if not args.nacked:
         interpreter.register(core_commands)
         interpreter.log('core extension loaded.')
-    for m in args.module:
-        try:
-            module = importlib.import_module(m)
-            interpreter.register(module.commands)
-            interpreter.log(f'module {m} loaded.')
-        except (ModuleNotFoundError, AttributeError, TypeError) as err:
-            print(f'Error importing module:', err)
+    if args.module:
+        for m in args.module:
+            try:
+                module = importlib.import_module(m)
+                interpreter.register(module.commands)
+                interpreter.log(f'module {m} loaded.')
+            except (ModuleNotFoundError, AttributeError, TypeError) as err:
+                print(f'Error importing module:', err)
     if args.command:
         interpreter.log('executing command:', args.command)
         interpreter.interpret(InputStream(args.command))

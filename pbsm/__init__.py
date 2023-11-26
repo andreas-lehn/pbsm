@@ -33,6 +33,10 @@ class Interpreter:
         if not isinstance(commands, dict):
             raise TypeError('commands is not of type dict')
         self.symbol_tables.append(commands)
+        return len(self.symbol_tables) - 1
+    
+    def unregister(self, commands: int):
+        del (self.symbol_tables[commands])
 
     def enter_deffered_mode(self):
         self.deffered_mode += 1
@@ -44,12 +48,24 @@ class Interpreter:
         return self.deffered_mode > 0
     
     def push(self, item):
+        """put an item onto the top of the stack"""
         self.stack.append(item)
     
+    def push_n(self, n: int, item):
+        """push an item at the n-th position of the stack"""
+        self.stack.insert(n, item)
+    
     def pop(self, type=object):
+        """pop an item from the stack an optionally check its type"""
         item = self.stack.pop()
         if not isinstance(item, type):
             raise TypeError(f'item {item} ({type(item)} is not an instance of {type}')
+        return item
+    
+    def pop_n(self, n: int):
+        """pop the n-th item from the stack"""
+        item = self.stack[n]
+        del self.stack[n]
         return item
     
     def peek(self, offset=0):
@@ -64,6 +80,12 @@ class Interpreter:
     def __set__(self, index, item):
         self.stack[index] = item
 
+    def __len__(self):
+        return len(self.stack)
+    
+    def __iter__(self):
+        return self.stack.__iter__()
+    
     class Marker:
         def __repr__(self):
             return '.'
