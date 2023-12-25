@@ -112,9 +112,8 @@ class Interpreter:
         self.push(sequence)
     
     class Symbol:
-        def __init__(self, interp, name):
+        def __init__(self, name):
             self.name = name
-            self.interp = interp
 
         def lookup(self, dict):
             if self.name in dict.keys():
@@ -225,9 +224,9 @@ class Interpreter:
             case Lexer.FLOAT:
                 self.execute(float(token.text))
             case Lexer.NAME:
-                self.execute(Interpreter.Symbol(self, token.text))
+                self.execute(Interpreter.Symbol(token.text))
             case Lexer.NAME_REF:
-                self.execute(Interpreter.Reference(Interpreter.Symbol(self, token.text[1:])))
+                self.execute(Interpreter.Reference(Interpreter.Symbol(token.text[1:])))
     
     def log(self, *args):
         if (self.verbose):
