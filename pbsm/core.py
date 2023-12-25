@@ -103,52 +103,56 @@ def ifelse(interp):
     else:
         interp.execute(op2)
 
-def register_exit(interp, exit: bool):
-    def exit_func(exit: bool):
-        exit = True
-    return interp.register({'exit': exit_func(exit)})
-
+class Flag:
+    def __init__(self):
+        self.flag = False
+    def __call__(self, interp):
+        self.flag = True
+    def __bool__(self):
+        return self.flag
+    
 def repeat(interp):
     op = interp.pop()
     n = interp.pop(int)
-    exit = False
-    exit_cmd = register_exit(interp, exit)
-    for i in range(n):
+    exit_flag = Flag()
+    cmd_idx = interp.register({'exit': exit_flag})
+    for _ in range(n):
         interp.execute(op)
-        if exit: break
-    interp.unregister(exit_cmd)
+        if exit_flag: break
+    interp.unregister(cmd_idx)
 
 def for_(interp):
     op = interp.pop()
     last = interp.pop(int)
     step = interp.pop(int)
     first = interp.pop(int)
-    exit = False
-    exit_cmd = register_exit(interp, exit)
+    exit_flag = Flag()
+    cmd_idx = interp.register({'exit': exit_flag})
     for i in range(first, last, step):
         interp.push(i)
         interp.execute(op)
-        if exit: break
-    interp.unregister(exit_cmd)
+        if exit_flag: break
+    interp.unregister(cmd_idx)
 
 def loop(interp):
     op = interp.pop()
-    exit = False
-    exit_cmd = register_exit(interp, exit)
-    while not exit:
+    exit_flag = Flag()
+    cmd_idx = interp.register({'exit': exit_flag})
+    while not exit_flag:
         interp.execute(op)
-    interp.unregister(exit_cmd)
+    interp.unregister(cmd_idx)
 
 def forall(interp):
     op = interp.pop()
     array = interp.pop(list)
-    exit = False
-    exit_cmd = register_exit(interp, exit)
+    exit_flag = Flag()
+    cmd_idx = interp.register({'exit': exit_flag})
     for o in array:
         interp.push(o)
         interp.execute(op)
-    interp.unregister(exit_cmd)
-    
+        if exit_flag: break
+    interp.unregister(cmd_idx)
+
 def exit(interp):
     sys.exit()
 

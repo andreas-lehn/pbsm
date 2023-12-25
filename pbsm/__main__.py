@@ -58,6 +58,6 @@ def main():
             except (RuntimeError, KeyError, TypeError, IndexError, ValueError) as err:
                 print(type(err).__name__, ':', str(err), file=sys.stderr)
     return 0
-        
+
 if __name__ == '__main__':
     sys.exit(main())

@@ -136,9 +136,9 @@ class Interpreter:
         if self.in_deffered_mode():
             result = symbol.lookup(self.symbol_tables[0])
         else:
-            for i in range(-1, -len(self.symbol_tables) - 1, -1):
-                result = symbol.lookup(self.symbol_tables[i])
-                if result:
+            for table in reversed(self.symbol_tables):
+                result = symbol.lookup(table)
+                if result is not None:
                     break
         return result
     
@@ -191,10 +191,10 @@ class Interpreter:
         if self.in_deffered_mode():
             if isinstance(obj, Interpreter.Symbol):
                 referee = self.lookup(obj)
-                if referee:
-                    referee(self)
-                else:
+                if referee is None:
                     self.push(obj)
+                else:
+                    referee(self)
             else:
                 self.push(obj)
         else:
@@ -202,7 +202,7 @@ class Interpreter:
                 obj(self)
             elif type(obj) == Interpreter.Symbol:
                 referee = self.lookup(obj)
-                if not referee:
+                if referee is None:
                     raise KeyError(f'symbol {obj} not defined.')
                 self.execute(referee)      
             else:
